@@ -1,0 +1,45 @@
+version: "3.9"
+
+volumes:
+  data: {}
+
+services:
+  mariadb:
+    image: mariadb:latest
+    environment:
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - data:/var/lib/mysql
+
+  bedrock:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8080:80"
+    depends_on:
+      - mariadb
+    volumes:
+      - ./.env:/var/www/html/.env
+      - ./config:/var/www/html/config
+      - ./web/app:/var/www/html/web/app
+      - ./web/index.php:/var/www/html/web/index.php
+      - ./web/wp-config.php:/var/www/html/web/wp-config.php
+      - ./auth.json:/var/www/html/auth.json
+      - ./composer.json:/var/www/html/composer.json
+      - ./phpcs.xml:/var/www/html/phpcs.xml
+      - ./wp-cli.yml:/var/www/html/wp-cli.yml
+
+  # Uncommend when using node
+  # node:
+  #  image: node:${NODE_VERSION}-alpine
+  #  command: sh -c "npm config set '@prodemos:registry' https://npm.pkg.github.com && npm config set '//npm.pkg.github.com/:_authToken\' ${NPM_TOKEN} && cd /var/www && yarn install && yarn start"
+  #  expose:
+  #    - 35729
+  #  ports:
+  #    - "35729:35729"
+  #  volumes:
+  #    - ./web/app/themes/parkers:/var/www/
